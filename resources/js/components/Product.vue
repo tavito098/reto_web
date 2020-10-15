@@ -19,6 +19,21 @@
                         </div>
                     </div>
                     <div class="card-content">
+                        <div class="row">
+                            <div class="col">
+                                <input type="date" v-model="initDate" class="form-control"> 
+                                <span class="text text-info">Fecha inicio*</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" v-model="endDate" class="form-control">
+                                <span class="text text-info">Fecha Fin*</span>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="btn btn-info" @click="searchProducByDates">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
                         <Table></Table>
                     </div>
                 </div>
@@ -40,15 +55,27 @@ export default {
     mounted() {
         this.$store.dispatch('getProducts');
     },
-    data() {
+    data(){
         return {
-            
+            initDate: '',
+            endDate: '',
         }
     },
     methods: {
         registerModal() {
-            this.$store.commit('changeModalTitle', 'Registrar Producto')
+            this.$store.commit('changeModalTitle', 'Registrar Producto');
             $("#productModal").modal('show');
+        },
+        searchProducByDates(){
+            if(this.initDate > this.endDate) {
+                swal('Espera!', 'La fecha fin debe ser mayor a la fecha inicio', 'warning');
+            }else{
+                let dates = {
+                    initDate: this.initDate,
+                    endDate: this.endDate
+                }
+                this.$store.dispatch('searchProducByDates', dates);
+            }
         }
     }
 }

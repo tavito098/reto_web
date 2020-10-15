@@ -64,6 +64,9 @@ export default {
     },
     data() {
         return {
+            headers: {
+                headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+            },
             columns: [{
                     label: "Imagen",
                     name: "image",
@@ -81,10 +84,12 @@ export default {
                 {
                     label: "Descripcion",
                     name: "description",
+                    sort: true,
                 },
                 {
                     label: "Precio",
-                    name: "price"
+                    name: "price",
+                    sort: true,
                 },
                 {
                     label: 'Opciones',
@@ -115,10 +120,31 @@ export default {
     },
     methods: {
         edit(product_id) {
-            alert(product_id);
+            this.$store.commit('changeModalTitle', 'Editar Producto');
+            this.$http.get('/products-resource/'+product_id+'/edit', this.headers).then((response) => {
+                this.$store.commit('changeProduct', response.data);
+                $("#productModal").modal('show');
+            }).catch((error) => {
+                console.log(error);
+            });
         },
         deleteProduct(product_id) {
-            alert(product_id);
+            swal({
+                title: "Estas seguro?",
+                text: "El producto se eliminara permanentemente",
+                icon: "warning",
+                dangerMode: true,
+                buttons: true,
+            }).then(willDelete => {
+                if (willDelete) {
+                    this.$http.delete('/products-resource/'+product_id, this.headers).then((response) => {
+                        this.$store.dispatch('getProducts');
+                        swal("OK", "El producto ha sido eliminado", "success");
+                    }).catch((error) => {
+                        console.log(error);
+                    });
+                }
+            });
         }
     }
 }

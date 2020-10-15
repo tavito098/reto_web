@@ -56,9 +56,16 @@
                                 </div>
                             </div>
                             <div class="col">
-                                <div class="form-group">
+                                
+                                <div class="form-group" >
                                     <label for="name">Imagen</label>
                                     <input type="file" class="form-control" ref="file" @change="onChangeFileUpload">
+                                   
+                                    <a v-if="image.length > 0"
+                                        target="_blank"
+                                        :href="'images/products/'+this.image">
+                                        Ver imagen
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -83,6 +90,9 @@ export default {
     name: 'Modal',
     data() {
         return {
+            headers: {
+                headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+            },
             categories: [],
             category: '',
             category_id: 0,
@@ -91,17 +101,35 @@ export default {
             price: '',
             image: '',
             errors: [],
+            product_id: null,
         }
     },
     computed: {
         modalTitle() {
             return this.$store.state.modalTitle
+        },
+        product() {
+            return this.$store.state.product
+        }
+    },
+    watch: {
+        product(newVal, oldVal){
+            this.category_id = newVal.category.id;
+            this.category = newVal.category.name;
+            this.product_id = newVal.id;
+            this.name = newVal.name;
+            this.description = newVal.description;
+            this.price = newVal.price;
+            this.image = (newVal.image == null) ? '' : newVal.image;
+        },
+        modalTitle() {
+            this.formClear();
         }
     },
     methods: {
         searchCategories() {
             if(this.category.length > 2) {
-                this.$http.get('/categories/'+this.category).then((response) => {
+                this.$http.get('/categories/'+this.category, this.headers).then((response) => {
                     this.categories = response.data;
                 }).catch((error) => {
                     console.log(error);
@@ -119,10 +147,14 @@ export default {
         setProduct() {
             let formData = new FormData();
             let headers = {
-                headers: {'Content-Type': 'multipart/form-data'}
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
             };
             let category = (this.category_id > 0) ? this.category_id : this.category;
             let description = (this.description == '') ? 'Sin descripcion' : this.description;
+            formData.append('product_id', this.product_id);
             formData.append('category', category);
             formData.append('name', this.name);
             formData.append('description', description);
@@ -138,6 +170,7 @@ export default {
             });
         },
         formClear() {
+            this.product_id = '';
             this.categories = [];
             this.category = '';
             this.category_id = 0;
@@ -146,6 +179,7 @@ export default {
             this.price = '';
             this.image = '';
             this.errors = [];
+            this.image = '';
             $("#productModal").modal('hide');
         }
     }    

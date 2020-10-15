@@ -1988,10 +1988,22 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: 'Modal',
   data: function data() {
     return {
+      headers: {
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      },
       categories: [],
       category: '',
       category_id: 0,
@@ -1999,12 +2011,30 @@ __webpack_require__.r(__webpack_exports__);
       description: '',
       price: '',
       image: '',
-      errors: []
+      errors: [],
+      product_id: null
     };
   },
   computed: {
     modalTitle: function modalTitle() {
       return this.$store.state.modalTitle;
+    },
+    product: function product() {
+      return this.$store.state.product;
+    }
+  },
+  watch: {
+    product: function product(newVal, oldVal) {
+      this.category_id = newVal.category.id;
+      this.category = newVal.category.name;
+      this.product_id = newVal.id;
+      this.name = newVal.name;
+      this.description = newVal.description;
+      this.price = newVal.price;
+      this.image = newVal.image == null ? '' : newVal.image;
+    },
+    modalTitle: function modalTitle() {
+      this.formClear();
     }
   },
   methods: {
@@ -2012,7 +2042,7 @@ __webpack_require__.r(__webpack_exports__);
       var _this = this;
 
       if (this.category.length > 2) {
-        this.$http.get('/categories/' + this.category).then(function (response) {
+        this.$http.get('/categories/' + this.category, this.headers).then(function (response) {
           _this.categories = response.data;
         })["catch"](function (error) {
           console.log(error);
@@ -2033,11 +2063,13 @@ __webpack_require__.r(__webpack_exports__);
       var formData = new FormData();
       var headers = {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
       };
       var category = this.category_id > 0 ? this.category_id : this.category;
       var description = this.description == '' ? 'Sin descripcion' : this.description;
+      formData.append('product_id', this.product_id);
       formData.append('category', category);
       formData.append('name', this.name);
       formData.append('description', description);
@@ -2054,6 +2086,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     formClear: function formClear() {
+      this.product_id = '';
       this.categories = [];
       this.category = '';
       this.category_id = 0;
@@ -2062,6 +2095,7 @@ __webpack_require__.r(__webpack_exports__);
       this.price = '';
       this.image = '';
       this.errors = [];
+      this.image = '';
       $("#productModal").modal('hide');
     }
   }
@@ -2110,6 +2144,21 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -2122,12 +2171,26 @@ __webpack_require__.r(__webpack_exports__);
     this.$store.dispatch('getProducts');
   },
   data: function data() {
-    return {};
+    return {
+      initDate: '',
+      endDate: ''
+    };
   },
   methods: {
     registerModal: function registerModal() {
       this.$store.commit('changeModalTitle', 'Registrar Producto');
       $("#productModal").modal('show');
+    },
+    searchProducByDates: function searchProducByDates() {
+      if (this.initDate > this.endDate) {
+        swal('Espera!', 'La fecha fin debe ser mayor a la fecha inicio', 'warning');
+      } else {
+        var dates = {
+          initDate: this.initDate,
+          endDate: this.endDate
+        };
+        this.$store.dispatch('searchProducByDates', dates);
+      }
     }
   }
 });
@@ -2209,6 +2272,11 @@ __webpack_require__.r(__webpack_exports__);
   },
   data: function data() {
     return {
+      headers: {
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      },
       columns: [{
         label: "Imagen",
         name: "image"
@@ -2222,10 +2290,12 @@ __webpack_require__.r(__webpack_exports__);
         sort: true
       }, {
         label: "Descripcion",
-        name: "description"
+        name: "description",
+        sort: true
       }, {
         label: "Precio",
-        name: "price"
+        name: "price",
+        sort: true
       }, {
         label: 'Opciones',
         name: 'options'
@@ -2254,10 +2324,37 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     edit: function edit(product_id) {
-      alert(product_id);
+      var _this = this;
+
+      this.$store.commit('changeModalTitle', 'Editar Producto');
+      this.$http.get('/products-resource/' + product_id + '/edit', this.headers).then(function (response) {
+        _this.$store.commit('changeProduct', response.data);
+
+        $("#productModal").modal('show');
+      })["catch"](function (error) {
+        console.log(error);
+      });
     },
     deleteProduct: function deleteProduct(product_id) {
-      alert(product_id);
+      var _this2 = this;
+
+      swal({
+        title: "Estas seguro?",
+        text: "El producto se eliminara permanentemente",
+        icon: "warning",
+        dangerMode: true,
+        buttons: true
+      }).then(function (willDelete) {
+        if (willDelete) {
+          _this2.$http["delete"]('/products-resource/' + product_id, _this2.headers).then(function (response) {
+            _this2.$store.dispatch('getProducts');
+
+            swal("OK", "El producto ha sido eliminado", "success");
+          })["catch"](function (error) {
+            console.log(error);
+          });
+        }
+      });
     }
   }
 });
@@ -38773,7 +38870,24 @@ var render = function() {
                           staticClass: "form-control",
                           attrs: { type: "file" },
                           on: { change: _vm.onChangeFileUpload }
-                        })
+                        }),
+                        _vm._v(" "),
+                        _vm.image.length > 0
+                          ? _c(
+                              "a",
+                              {
+                                attrs: {
+                                  target: "_blank",
+                                  href: "images/products/" + this.image
+                                }
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                    Ver imagen\n                                "
+                                )
+                              ]
+                            )
+                          : _vm._e()
                       ])
                     ])
                   ]),
@@ -38907,7 +39021,84 @@ var render = function() {
                 ])
               ]),
               _vm._v(" "),
-              _c("div", { staticClass: "card-content" }, [_c("Table")], 1)
+              _c(
+                "div",
+                { staticClass: "card-content" },
+                [
+                  _c("div", { staticClass: "row" }, [
+                    _c("div", { staticClass: "col" }, [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.initDate,
+                            expression: "initDate"
+                          }
+                        ],
+                        staticClass: "form-control",
+                        attrs: { type: "date" },
+                        domProps: { value: _vm.initDate },
+                        on: {
+                          input: function($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.initDate = $event.target.value
+                          }
+                        }
+                      }),
+                      _vm._v(" "),
+                      _c("span", { staticClass: "text text-info" }, [
+                        _vm._v("Fecha inicio*")
+                      ])
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col" }, [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.endDate,
+                            expression: "endDate"
+                          }
+                        ],
+                        staticClass: "form-control",
+                        attrs: { type: "date" },
+                        domProps: { value: _vm.endDate },
+                        on: {
+                          input: function($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.endDate = $event.target.value
+                          }
+                        }
+                      }),
+                      _vm._v(" "),
+                      _c("span", { staticClass: "text text-info" }, [
+                        _vm._v("Fecha Fin*")
+                      ])
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col" }, [
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-info",
+                          attrs: { type: "button" },
+                          on: { click: _vm.searchProducByDates }
+                        },
+                        [_c("i", { staticClass: "fas fa-search" })]
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("Table")
+                ],
+                1
+              )
             ])
           ]
         )
@@ -54375,7 +54566,8 @@ vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(vuex__WEBPACK_IMPORTED_MODULE_1__
 /* harmony default export */ __webpack_exports__["default"] = (new vuex__WEBPACK_IMPORTED_MODULE_1__["default"].Store({
   state: {
     modalTitle: '',
-    products: []
+    products: [],
+    product: []
   },
   mutations: {
     changeModalTitle: function changeModalTitle(state, newVal) {
@@ -54383,12 +54575,31 @@ vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(vuex__WEBPACK_IMPORTED_MODULE_1__
     },
     changeProducts: function changeProducts(state, newVal) {
       state.products = newVal;
+    },
+    changeProduct: function changeProduct(state, newVal) {
+      state.product = newVal;
     }
   },
   actions: {
     getProducts: function getProducts(context) {
-      axios__WEBPACK_IMPORTED_MODULE_2___default.a.get('/products-resource').then(function (response) {
-        console.log(response.data);
+      var headers = {
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      };
+      axios__WEBPACK_IMPORTED_MODULE_2___default.a.get('/products-resource', headers).then(function (response) {
+        context.commit('changeProducts', response.data);
+      })["catch"](function (error) {
+        console.log(error);
+      });
+    },
+    searchProducByDates: function searchProducByDates(context, payload) {
+      var headers = {
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      };
+      axios__WEBPACK_IMPORTED_MODULE_2___default.a.get('/searchProducByDates/' + payload.initDate + '/' + payload.endDate, headers).then(function (response) {
         context.commit('changeProducts', response.data);
       })["catch"](function (error) {
         console.log(error);
