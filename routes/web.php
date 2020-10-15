@@ -22,3 +22,5 @@ Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
 
 Route::view('/products', 'product');
+Route::resource('/categories', 'CategoryController');
+Route::resource('/products-resource', 'ProductController');

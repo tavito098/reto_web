@@ -38,7 +38,7 @@ export default {
         Modal
     },
     mounted() {
-
+        this.$store.dispatch('getProducts');
     },
     data() {
         return {
@@ -48,7 +48,7 @@ export default {
     methods: {
         registerModal() {
             this.$store.commit('changeModalTitle', 'Registrar Producto')
-            $("#exampleModal").modal('show');
+            $("#productModal").modal('show');
         }
     }
 }

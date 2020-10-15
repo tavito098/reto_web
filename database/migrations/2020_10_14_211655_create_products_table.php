@@ -19,7 +19,7 @@ class CreateProductsTable extends Migration
             $table->string('name');
             $table->text('description');
             $table->string('image')->nullable();
-            $table->decimal('price', 8, 2);
+            $table->decimal('price');
             $table->timestamps();
 
             $table->foreign('category_id')->references('id')->on('categories');
