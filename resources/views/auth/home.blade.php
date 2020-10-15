@@ -25,7 +25,7 @@
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-6 col-12">
-                    <div class="card pull-up">
+                    <div class="card pull-up" onclick="window.location.replace('/products')">
                         <div class="card-content">
                             <div class="card-body">
                                 <div class="media d-flex">
