@@ -30,3 +30,10 @@ Route::get('/searchProducByDates/{initDate}/{endDate}', 'ProductController@searc
 //folder tree
 Route::view('/folder-tree', 'folderTree');
 Route::resource('/folders', 'FolderController');
+
+//quotations
+Route::resource('/users', 'UserController');
+Route::view('/quotations-view', 'quotation');
+Route::resource('/quotations-resource', 'QuotationController');
+Route::get('/downloadQuotation/{id}', 'QuotationController@downloadQuotation');
+Route::get('/sendEmail/{id}', 'QuotationController@sendEmail');

@@ -21,6 +21,7 @@ class ProductController extends Controller
         foreach($products as $product)
         {
             $formData = [
+                'id' => $product->id,
                 'image' => ($product->image == null) ? 'default.png' : $product->image,
                 'category' => $product->category['name'],
                 'name' => $product->name,
