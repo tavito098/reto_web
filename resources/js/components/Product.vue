@@ -44,8 +44,8 @@
 </template>
 
 <script>
-import Table from './Table'
-import Modal from './Modal'
+import Table from './products/Table'
+import Modal from './products/Modal'
 export default {
     name: 'Product',
     components: {
